@@ -63,7 +63,7 @@ class App extends Component {
 
   render() {
     return (
-      <div>
+      <div className="app-root">
         <div className="container">
           <header>
             <h1>Welcome to Creative Partner!@</h1>
@@ -148,3 +148,10 @@ export default withTracker(() => {
     currentUser: Meteor.user()
   };
 })(App);
+
+FlowRouter.route("/pizza/:_type", {
+  name: "pizza",
+  action(params, queryParams) {
+    console.log(FlowRouter.getParam("_type") + " pizzza!");
+  }
+});

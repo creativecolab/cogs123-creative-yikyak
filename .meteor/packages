@@ -24,3 +24,4 @@ accounts-password
 accounts-facebook
 service-configuration
 react-meteor-data
+kadira:flow-router
