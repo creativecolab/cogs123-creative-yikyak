@@ -1,7 +1,7 @@
 body {
   font-family: sans-serif;
-  background-color: #315481;
-  background-image: linear-gradient(to bottom, #ffcaca, #9affab 154%);
+  background-color: #facaca;
+  background-image: linear-gradient(to bottom, #facaca, #9affab 154%);
   background-attachment: fixed;
 
   position: absolute;
@@ -14,6 +14,11 @@ body {
   margin: 0;
 
   font-size: 14px;
+}
+
+.nameError {
+  color: #cc00ff;
+  font-weight: bold;
 }
 
 .container {

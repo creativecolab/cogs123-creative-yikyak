@@ -3,15 +3,10 @@ import ReactDOM from "react-dom";
 import { withTracker } from "meteor/react-meteor-data";
 import { Meteor } from "meteor/meteor";
 
-//import Responses from "./Task.js";
-
-import AccountsUIWrapper from "./AccountsUIWrapper.js";
 import { Responses } from "../api/responses.js";
 import { Messages } from "../api/messages.js";
 
 import Message from "./Message.js";
-
-import { mount, withOptions } from "react-mounter";
 
 // App component represents the whole app
 class App extends Component {
@@ -34,6 +29,7 @@ class App extends Component {
     // insert message to database
     Messages.insert({
       text,
+      num_likes: 0,
       user_likes: [],
       updatedAt: new Date(), // current time
       createdAt: new Date(), // current time
@@ -97,15 +93,19 @@ class App extends Component {
       <div className="app-root">
         <div className="container">
           <header>
-            <h1>Welcome to the Creative Yik Yak!@</h1>
+            <h1>Welcome to the Creative Yik Yak!</h1>
             <h3>
-              WOw! {this.props.userCount}
+              Wow! {this.props.userCount}
               {this.props.userCount > 1 ? " users " : " user "}
               participated!
             </h3>
             {this.state.responseSubmitted ? (
               <div>
-                Hi, {this.state.currentUser}! How would you answer this prompt?
+                Hi, {this.state.currentUser}!
+                <br />
+                <br />
+                <strong>Prompt</strong>: How might we engage student in
+                collaborative learning activities through technology?
                 <form
                   className="new-message"
                   onSubmit={this.handleSubmitMessage.bind(this)}
@@ -113,7 +113,7 @@ class App extends Component {
                   <input
                     type="text"
                     ref="textInput"
-                    placeholder="Type to add new messages"
+                    placeholder="Type to add a new idea"
                   />
                 </form>
               </div>
@@ -130,7 +130,11 @@ class App extends Component {
                         <td>
                           <input type="text" ref="name" />
                         </td>
-                        <td ref="userExists" style={err_style}>
+                        <td
+                          className="nameError"
+                          ref="userExists"
+                          style={err_style}
+                        >
                           User already exists! :(
                         </td>
                       </tr>
@@ -152,12 +156,13 @@ class App extends Component {
   }
 }
 
+// load props for App component
 export default withTracker(() => {
   return {
     responses: Responses.find({}, { sort: { createdAt: -1 } }).fetch(),
     messages: Messages.find(
       {},
-      { sort: { user_likes: -1, updatedAt: -1 } }
+      { sort: { num_likes: -1, updatedAt: -1 } }
     ).fetch(),
     userCount: Responses.find({}).count()
   };

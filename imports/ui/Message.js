@@ -2,21 +2,32 @@ import React, { Component } from "react";
 import { Messages } from "../api/messages.js";
 
 export default class Message extends Component {
+  // called when user upvotes a message
   upvoteThisMessage() {
+    // add user to list of users who like this message
     Messages.update(this.props.message._id, {
       $push: { user_likes: this.props.user }
     });
+
+    // update number of likes and update time
     Messages.update(this.props.message._id, {
-      $set: { updatedAt: new Date() }
+      $set: {
+        updatedAt: new Date(),
+        num_likes: this.props.message.num_likes + 1
+      }
     });
   }
 
+  // called when user downvotes a message
   downvoteThisMessage() {
     Messages.update(this.props.message._id, {
       $pull: { user_likes: this.props.user }
     });
     Messages.update(this.props.message._id, {
-      $set: { updatedAt: new Date() }
+      $set: {
+        updatedAt: new Date(),
+        num_likes: this.props.message.num_likes - 1
+      }
     });
   }
 
@@ -26,23 +37,14 @@ export default class Message extends Component {
       { _id: this.props.message._id },
       { user_likes: 1 }
     ).fetch();
-    console.log(users);
 
-    if (!users) return false;
-
-    if (users[0].user_likes.indexOf(this.props.user) == -1) {
+    if (!users || users[0].user_likes.indexOf(this.props.user) == -1)
       return false;
-    }
 
     return true;
   }
 
   render() {
-    let color =
-      this.props.message.user_likes.length > 0
-        ? "{color: green}"
-        : "{color: red}";
-
     return (
       <li>
         {this.userVoted() ? (
@@ -50,16 +52,16 @@ export default class Message extends Component {
             className="upvoted"
             onClick={this.downvoteThisMessage.bind(this)}
           >
-            {this.props.message.user_likes.length > 0 ? "+" : ""}
-            {this.props.message.user_likes.length} &#9660;
+            {this.props.message.num_likes > 0 ? "+" : ""}
+            {this.props.message.num_likes} &#9660;
           </button>
         ) : (
           <button
             className="novote"
             onClick={this.upvoteThisMessage.bind(this)}
           >
-            {this.props.message.user_likes.length > 0 ? "+" : ""}
-            {this.props.message.user_likes.length} &#9650;
+            {this.props.message.num_likes > 0 ? "+" : ""}
+            {this.props.message.num_likes} &#9650;
           </button>
         )}
         <span className="text">
