@@ -16,182 +16,109 @@ import { mount, withOptions } from "react-mounter";
 // App component represents the whole app
 class App extends Component {
   constructor(props) {
-    super(props);
+    super(props); // must call super() on constructor
 
-    this.state = {
-      hideCompleted: false,
-      waitingForPeople: true,
-      formSubmitted: this.props.formSubmitted
-    };
-    console.log(this.props.formSubmitted);
+    // set state to not submitted
+    this.state = { responseSubmitted: false, currentUser: "" };
   }
 
-  filterUsers() {
-    let filteredUsers = this.props.responses;
-  }
-
-  selectTopic() {
-    const newTopic = ReactDOM.findDOMNode(this.refs.topic_select).value.trim();
-    console.log(newTopic);
-    this.setState({
-      currentTopic: newTopic
-    });
-  }
-
-  renderTasks() {
-    let filteredTasks = this.props.tasks;
-    if (this.state.hideCompleted) {
-      filteredTasks = filteredTasks.filter(task => !task.checked);
-    }
-    return filteredTasks.map(task => <Task key={task._id} task={task} />);
-  }
-
-  // componentDidMount() {
-  //   this.setState({ formSubmitted: this.props.formSubmitted });
-  // }
-
+  // executes when user submit an idea
   handleSubmitMessage(event) {
     event.preventDefault();
 
-    // Find the text field via React ref
+    // find the text field via React ref
     const text = ReactDOM.findDOMNode(this.refs.textInput).value.trim();
-    const topic = this.state.currentTopic;
 
+    if (text == "") return;
+
+    // insert message to database
     Messages.insert({
       text,
-      topic,
+      user_likes: [],
+      updatedAt: new Date(), // current time
       createdAt: new Date(), // current time
-      owner: Meteor.userId(),
-      username: Meteor.user().username
+      owner: this.state.currentUser
     });
 
+    // clear field
     ReactDOM.findDOMNode(this.refs.textInput).value = "";
-    console.log(text);
-    console.log(topic);
+    this.setState({
+      answerSubmitted: true
+    });
   }
 
   handleSubmit(event) {
     event.preventDefault();
 
-    // Find the text field via React ref
-    const name = ReactDOM.findDOMNode(this.refs.name).value.trim();
-    const topic = ReactDOM.findDOMNode(this.refs.topics).value.trim();
+    // find the text field via React ref
+    const username = ReactDOM.findDOMNode(this.refs.name).value.trim();
+    const error = ReactDOM.findDOMNode(this.refs.userExists);
 
-    console.log(name);
-    console.log(topic);
+    let userExists =
+      Responses.find({
+        username
+      }).fetch().length > 0;
 
-    ReactDOM.findDOMNode(this.refs.topic_select).value = topic;
-
-    Responses.insert({
-      name,
-      topic,
-      createdAt: new Date(), // current time
-      owner: Meteor.userId(),
-      username: Meteor.user().username
-    });
-
-    this.setState({ formSubmitted: true, currentTopic: topic });
-  }
-
-  shouldComponentUpdate(nextProps, nextState) {
-    if (this.state.formSubmitted) {
-      console.log("YOOOO@@!! " + this.props.userCount);
-      // FlowRouter.go("pizza", {
-      //   _type: "tomato"
-      // });
-    } else {
-      console.log("NOPE.");
+    if (userExists) {
+      error.style = { visibility: "visible" };
+      return;
     }
-    console.log("form submitted? " + this.props.formSubmitted);
-    return true;
+    error.style = { visibility: "hidden" };
+
+    // insert response to database
+    Responses.insert({ username, createdAt: new Date() });
+
+    // update state
+    this.setState({ responseSubmitted: true, currentUser: username });
   }
-
-  // handleSubmit(event) {
-  //   event.preventDefault();
-
-  //   // Find the text field via React ref
-  //   const name = this.props.currentUser.name;
-  //   const topic = ReactDOM.findDOMNode(this.refs.topics).value.trim();
-
-  //   console.log(name);
-  //   console.log(topic);
-
-  //   Messages.insert({
-  //     name,
-  //     topic,
-  //     createdAt: new Date(), // current time
-  //     owner: Meteor.userId(),
-  //     username: Meteor.user().username
-  //   });
-
-  //   this.setState({ formSubmitted: true });
-  // }
-
-  // toggleHideCompleted() {
-  //   this.setState({
-  //     hideCompleted: !this.state.hideCompleted
-  //   });
-  // }
 
   renderMessages() {
     let filteredMessages = this.props.messages;
-    if (this.state.formSubmitted) {
-      filteredMessages = filteredMessages.filter(
-        message => message.topic == this.state.currentTopic
-      );
-    }
+    // if (this.state.responseSubmitted) {
+    //   filteredMessages = filteredMessages.filter(
+    //     message => message.topic == this.state.currentTopic
+    //   );
+    // }
     return filteredMessages.map(message => (
-      <Message key={message._id} message={message} />
+      <Message
+        key={message._id}
+        message={message}
+        user={this.state.currentUser}
+      />
     ));
   }
 
   render() {
+    let err_style = {
+      visibility: "hidden"
+    };
+
     return (
       <div className="app-root">
         <div className="container">
           <header>
-            <h1>Welcome to Creative Partner!@</h1>
-            <h3>There are {this.props.userCount} peoples who participated!</h3>
-            <label className="hide-completed">
-              <form onChange={this.selectTopic.bind(this)}>
-                <select name="topic_select" ref="topic_select">
-                  <option value="tomato">tomato</option>
-                  <option value="pickle">pickle</option>
-                  <option value="philz">philz</option>
-                  <option value="dogs">dogs</option>
-                  <option value="cogs123">cogs123</option>
-                </select>
-              </form>
-            </label>
-            {/* <label className="hide-completed">
-            <input
-              type="checkbox"
-              readOnly
-              checked={this.state.hideCompleted}
-              onClick={this.toggleHideCompleted.bind(this)}
-            />
-            Hide Completed Tasks
-          </label> */}
-
-            <AccountsUIWrapper />
-
-            {this.props.currentUser ? (
-              this.state.formSubmitted ? (
-                this.props.currentUser ? (
-                  <form
-                    className="new-message"
-                    onSubmit={this.handleSubmitMessage.bind(this)}
-                  >
-                    <input
-                      type="text"
-                      ref="textInput"
-                      placeholder="Type to add new messages"
-                    />
-                  </form>
-                ) : (
-                  ""
-                )
-              ) : (
+            <h1>Welcome to the Creative Yik Yak!@</h1>
+            <h3>
+              WOw! {this.props.userCount}
+              {this.props.userCount > 1 ? " users " : " user "}
+              participated!
+            </h3>
+            {this.state.responseSubmitted ? (
+              <div>
+                Hi, {this.state.currentUser}! How would you answer this prompt?
+                <form
+                  className="new-message"
+                  onSubmit={this.handleSubmitMessage.bind(this)}
+                >
+                  <input
+                    type="text"
+                    ref="textInput"
+                    placeholder="Type to add new messages"
+                  />
+                </form>
+              </div>
+            ) : (
+              <div>
                 <form
                   className="new-response"
                   onSubmit={this.handleSubmit.bind(this)}
@@ -201,29 +128,10 @@ class App extends Component {
                       <tr>
                         <th>Name:</th>
                         <td>
-                          <input
-                            type="text"
-                            ref="name"
-                            defaultValue={this.props.currentUser.username}
-                          />
+                          <input type="text" ref="name" />
                         </td>
-                      </tr>
-                      {/* <tr>
-                        <th>Age:</th>
-                        <td>
-                          <input type="number" ref="age" min="18" max="99" />
-                        </td>
-                      </tr> */}
-                      <tr>
-                        <th>Topic:</th>
-                        <td>
-                          <select name="topics" ref="topics">
-                            <option value="tomato">tomato</option>
-                            <option value="pickle">pickle</option>
-                            <option value="philz">philz</option>
-                            <option value="dogs">dogs</option>
-                            <option value="cogs123">cogs123</option>
-                          </select>
+                        <td ref="userExists" style={err_style}>
+                          User already exists! :(
                         </td>
                       </tr>
                     </tbody>
@@ -234,12 +142,10 @@ class App extends Component {
                     value="Submit!!"
                   />
                 </form>
-              )
-            ) : (
-              ""
+              </div>
             )}
           </header>
-          <ul>{this.renderMessages()}</ul>
+          {this.state.answerSubmitted ? <ul>{this.renderMessages()}</ul> : ""}
         </div>
       </div>
     );
@@ -249,39 +155,10 @@ class App extends Component {
 export default withTracker(() => {
   return {
     responses: Responses.find({}, { sort: { createdAt: -1 } }).fetch(),
-    messages: Messages.find({}, { sort: { createdAt: -1 } }).fetch(),
-    userCount: Responses.find({}).count(),
-    formSubmitted: Responses.find({ owner: Meteor.userId() }).count(),
-    currentUser: Meteor.user()
+    messages: Messages.find(
+      {},
+      { sort: { user_likes: -1, updatedAt: -1 } }
+    ).fetch(),
+    userCount: Responses.find({}).count()
   };
 })(App);
-
-FlowRouter.route("/pizza/:_type", {
-  name: "pizza",
-  action(params, queryParams) {
-    mount(Pizza, { type: FlowRouter.getParam("_type") });
-  }
-});
-
-FlowRouter.route("/", {
-  name: "App.home",
-  action(params, queryParams) {}
-});
-
-class Pizza extends Component {
-  renderMessages() {
-    let allMessages = this.props.messages;
-    return allMessages.map(message => (
-      <Message key={message._id} message={message} />
-    ));
-  }
-
-  render() {
-    return (
-      <div>
-        <h1>PIzza! {this.props.type} </h1>
-        {/* <ul>{this.renderMessages()}</ul> */}
-      </div>
-    );
-  }
-}
