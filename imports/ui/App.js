@@ -104,8 +104,9 @@ class App extends Component {
                 Hi, {this.state.currentUser}!
                 <br />
                 <br />
-                <strong>Prompt</strong>: How might we engage student in
-                collaborative learning activities through technology?
+                <strong>Prompt</strong>: Prof. Dow will be having his first
+                child, a baby girl, in the coming weeks. Let's brainstorm names
+                for her!
                 <form
                   className="new-message"
                   onSubmit={this.handleSubmitMessage.bind(this)}
